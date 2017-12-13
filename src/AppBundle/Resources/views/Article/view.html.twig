@@ -1,0 +1,18 @@
+{% extends '@App/Article/base.html.twig' %}
+
+{% block body %}
+
+    <h1>{{ article.name }}</h1>
+    <p>
+        {{ article.text }}
+    </p>
+    Date: {{ article.publishDate.format('Y.m.d H:i:s') }}<br>
+    Tags:
+    {% for i in article.tags %}
+        {% if loop.index0 %},{% endif %}
+        <a href="{{ path('article_tag', {'id': i.id}) }}">
+            {{ i.name }}
+        </a>
+    {% endfor %}
+
+{% endblock %}

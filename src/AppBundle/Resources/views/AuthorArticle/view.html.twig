@@ -1,0 +1,13 @@
+{% extends '@App/AuthorArticle/base.html.twig' %}
+
+{% block body %}
+
+    <h1>{{ authorArticles.name }}</h1>
+    <p>
+        {{ authorArticles.text }}
+    </p>
+    Author: {{ authorArticles.author }}<br>
+    Site: <a href="{{ authorArticles.site }}">{{ authorArticles.site }}</a><br>
+    Date: {{ authorArticles.publishDate.format('Y.m.d H:i:s') }}
+
+{% endblock %}
