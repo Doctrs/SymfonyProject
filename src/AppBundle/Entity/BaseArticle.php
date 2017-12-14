@@ -2,6 +2,7 @@
 
 namespace AppBundle\Entity;
 
+use Gedmo\Mapping\Annotation as Gedmo; // Подключение Gedmo
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -45,7 +46,8 @@ abstract class BaseArticle
     /**
      * @var string
      *
-     * @ORM\Column(name="url", type="string", length=255, unique=true)
+     * @Gedmo\Slug(fields={"text"})
+     * @ORM\Column(name="url", length=255, unique=true)
      */
     protected $url;
 

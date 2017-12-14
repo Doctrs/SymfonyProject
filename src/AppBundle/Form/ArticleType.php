@@ -3,13 +3,18 @@
 namespace AppBundle\Form;
 
 use AppBundle\Entity\Tag;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Count;
 use Symfony\Component\Validator\Constraints\DateTime;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -17,6 +22,12 @@ use Symfony\Component\Validator\Constraints\NotNull;
 
 class ArticleType extends AbstractType
 {
+    private $em;
+
+    public function __construct(EntityManagerInterface $em)
+    {
+        $this->em = $em;
+    }
     /**
      * {@inheritdoc}
      */
@@ -46,6 +57,9 @@ class ArticleType extends AbstractType
             ])
             ->add('tags', TextType::class, [
                 'label' => 'Тэги',
+                'constraints' => [
+                    new Count(['max' => 3]),
+                ],
             ])
             ->add('publishDate', null, [
                 'label' => 'Дата публикации',
@@ -60,6 +74,7 @@ class ArticleType extends AbstractType
                 ]
             ]);
 
+        $em = $this->em;
         $builder
             ->get('tags')
             ->addModelTransformer(new CallbackTransformer(
@@ -69,12 +84,31 @@ class ArticleType extends AbstractType
                     });
                     return join(', ', $tagsAsArray->toArray());
                 },
-                function ($tagsAsString) {
-                    $tags = explode(',', $tagsAsString);
-                    $tags = array_slice($tags, 0, 3);
-                    $tags = array_map(function ($item) {
+                function ($tagsAsString) use ($em) {
+                    $tagsAsArray = explode(',', $tagsAsString);
+                    $tags = new ArrayCollection(array_map(function ($item) {
                         return Tag::create(trim($item));
-                    }, $tags);
+                    }, $tagsAsArray));
+
+
+                    $tags_temp = $em->getRepository(Tag::class)->findBy([
+                        'name' => $tagsAsArray
+                    ]);
+                    $tags_em = [];
+                    foreach ($tags_temp as $tag_tmp) {
+                        $tags_em[mb_strtolower($tag_tmp->getName())] = $tag_tmp;
+                    }
+
+                    foreach ($tags as $key => $tag_form) {
+                        $name = mb_strtolower($tag_form->getName());
+                        if (isset($tags_em[$name])) {
+                            $tags->remove($key);
+                            $tags->add($tags_em[$name]);
+                        } else {
+                            $em->persist($tag_form);
+                        }
+                    }
+
                     return $tags;
                 }
             ));

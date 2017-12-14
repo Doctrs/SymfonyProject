@@ -73,14 +73,8 @@ class ArticleController extends Controller
 
         $form->handleRequest($request);
         if ($form->isValid()) {
-            $this->createTags($form);
             /** @var EntityManager $em */
             $em = $this->get('doctrine')->getManager();
-            $url = $this->get('app.get.url')->getUrl(
-                $article->getName(),
-                $em->getRepository(Article::class)
-            );
-            $article->setUrl($url);
             $em->persist($article);
             $em->flush();
             return $this->redirect($this->generateUrl('article_edit', [
@@ -91,39 +85,6 @@ class ArticleController extends Controller
         return [
             'form' => $form->createView()
         ];
-    }
-
-    /**
-     * @param Form $form
-     * @throws \Doctrine\ORM\OptimisticLockException
-     */
-    private function createTags(Form $form)
-    {
-        $tags_name = $form->getData()->getTags()->map(function (Tag $tag) {
-            return $tag->getName();
-        });
-        /** @var EntityManager $em */
-        $em = $this->get('doctrine')->getManager();
-        $tags_temp = $em->getRepository(Tag::class)->findBy([
-            'name' => $tags_name->toArray()
-        ]);
-        $tags_em = [];
-        foreach ($tags_temp as $tag_tmp) {
-            $tags_em[mb_strtolower($tag_tmp->getName())] = $tag_tmp;
-        }
-        /** @var ArrayCollection $tags_form */
-        $tags_form = $form->getData()->getTags();
-
-        foreach ($tags_form as $key => $tag_form) {
-            $name = mb_strtolower($tag_form->getName());
-            if (isset($tags_em[$name])) {
-                $tags_form->remove($key);
-                $tags_form->add($tags_em[$name]);
-            } else {
-                $em->persist($tag_form);
-            }
-        }
-        $em->flush();
     }
 
     /**
@@ -150,7 +111,6 @@ class ArticleController extends Controller
 
         $form->handleRequest($request);
         if ($form->isValid()) {
-            $this->createTags($form);
             $this->get('doctrine')->getManager()->flush();
         }
 

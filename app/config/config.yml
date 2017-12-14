@@ -8,6 +8,11 @@ imports:
 parameters:
     locale: en
 
+stof_doctrine_extensions:
+    orm:
+        default:
+            sluggable:   true
+
 framework:
     #esi: ~
     #translator: { fallbacks: ['%locale%'] }

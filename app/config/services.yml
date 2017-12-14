@@ -5,11 +5,10 @@ parameters:
 
 services:
 
-    app.get.url:
-        class: AppBundle\Service\Url
-        arguments: ["@doctrine.orm.entity_manager"]
-        public: true
-
+    AppBundle\Form\ArticleType:
+        arguments: ['@doctrine.orm.entity_manager']
+        tags: [form.type]
+        public: false
 
     # default configuration for services in *this* file
     _defaults:
